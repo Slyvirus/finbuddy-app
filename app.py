@@ -21,7 +21,7 @@ user_input = st.text_input("請輸入你的投資問題：", "")
 if user_input:
     with st.spinner("FinBuddy 思考中..."):
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "你是一位像朋友的專業理財顧問，擅長股票、房地產、虛擬貨幣等投資回報模擬，語氣輕鬆、比喻清楚，幫用戶生動理解的方式講解。"},
                 {"role": "user", "content": user_input}
