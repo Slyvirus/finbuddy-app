@@ -29,11 +29,35 @@ years = st.number_input(
     help="輸入計畫持續投入的總年數（例如 20 年）"
 )
 
+# === 側邊欄功能 ===
+st.sidebar.markdown("## 🔧 操作選項")
+
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+# 清除按鈕
+if st.sidebar.button("🔁 清除輸入內容"):
+    monthly_investment = 10000
+    annual_return_rate = 5.0
+    years = 20
+    st.experimental_rerun()
+
+# 顯示歷史紀錄
+st.sidebar.markdown("### 📜 歷史試算紀錄")
+if st.session_state.history:
+    for i, record in enumerate(reversed(st.session_state.history), 1):
+        st.sidebar.markdown(f"**第 {i} 筆**\n\n{record}")
+else:
+    st.sidebar.caption("目前沒有試算紀錄")
+
 # 有輸入就送給 GPT 模擬分析
 if st.button("送出模擬"):
     with st.spinner("FinBuddy 思考中..."):
 
         response = openai.ChatCompletion.create(
+    st.session_state.history.append(
+        f"每月投資：{monthly_investment} 元，年報酬率：{annual_return_rate}% ，年數：{years} 年 → 結果：系統已完成試算"
+    )
             model="gpt-3.5-turbo",  # 使用免費額度模型
             messages=[
                 {
