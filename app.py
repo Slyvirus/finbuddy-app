@@ -84,3 +84,32 @@ if st.button("送出模擬"):
 
         reply = response.choices[0].message.content
         st.success(reply)
+
+
+# === 📈 報酬率趨勢圖表區塊 ===
+import matplotlib.pyplot as plt
+
+# 每月複利試算
+n = years * 12
+r = annual_return_rate / 100 / 12
+total = 0
+growth = []
+
+for i in range(1, n + 1):
+    total = total * (1 + r) + monthly_investment
+    growth.append(total)
+
+# 畫圖
+fig, ax = plt.subplots()
+ax.plot(range(1, n + 1), growth, color="teal")
+ax.set_xlabel("投資期間（月）")
+ax.set_ylabel("累積資產金額（元）")
+ax.set_title("📈 投資累積金額趨勢圖")
+
+# 顯示終點註記
+final_amount = growth[-1]
+ax.annotate(f"最終金額：{int(final_amount):,} 元",
+            xy=(n, final_amount), xytext=(n * 0.7, final_amount * 0.8),
+            arrowprops=dict(arrowstyle="->"))
+
+st.pyplot(fig)
