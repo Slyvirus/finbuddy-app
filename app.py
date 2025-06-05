@@ -113,7 +113,7 @@ if st.button("送出模擬"):
         ax.plot(range(1, n + 1), growth, color="#1976D2", linewidth=2.5, label="Cumulative Value")
 
         ax.annotate(f"Final: {int(total):,} TWD", xy=(n, growth[-1]),
-                    xytext=(n - 30, growth[-1] * 1.05),
+                    xytext=(n - 30, growth[-1] * 1.12),
                     arrowprops=dict(facecolor='gray', arrowstyle='->'),
                     fontsize=10, color="black")
 
