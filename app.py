@@ -3,6 +3,11 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI  # ✅ 新版 SDK
 
+import matplotlib
+import matplotlib.pyplot as plt
+matplotlib.rcParams['font.family'] = 'Microsoft JhengHei'  # 微軟正黑體支援繁體中文
+
+
 # 載入 .env 的金鑰
 load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -86,10 +91,12 @@ if st.button("送出模擬"):
         st.success(reply)
 
 
-# === 📈 報酬率趨勢圖表區塊 ===
+# === 報酬率趨勢圖 ===
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.rcParams['font.family'] = 'Microsoft JhengHei'
 
-# 每月複利試算
+# 每月複利計算
 n = years * 12
 r = annual_return_rate / 100 / 12
 total = 0
@@ -100,16 +107,21 @@ for i in range(1, n + 1):
     growth.append(total)
 
 # 畫圖
-fig, ax = plt.subplots()
-ax.plot(range(1, n + 1), growth, color="teal")
-ax.set_xlabel("投資期間（月）")
-ax.set_ylabel("累積資產金額（元）")
-ax.set_title("📈 投資累積金額趨勢圖")
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(range(1, n + 1), growth, color="teal", linewidth=2, marker='', label="累積資產")
 
-# 顯示終點註記
-final_amount = growth[-1]
-ax.annotate(f"最終金額：{int(final_amount):,} 元",
-            xy=(n, final_amount), xytext=(n * 0.7, final_amount * 0.8),
-            arrowprops=dict(arrowstyle="->"))
+# 加上最終金額提示
+ax.annotate(f"最終金額：{int(total):,} 元",
+            xy=(n, growth[-1]),
+            xytext=(n - 30, growth[-1] * 1.1),
+            arrowprops=dict(facecolor='black', shrink=0.05),
+            fontsize=10, color="black")
+
+# 美化圖表標籤
+ax.set_xlabel("投資期數（月）")
+ax.set_ylabel("累積資產總額（元）")
+ax.set_title("📈 投資累積資產趨勢圖", fontsize=14)
+ax.grid(True)
+ax.legend()
 
 st.pyplot(fig)
