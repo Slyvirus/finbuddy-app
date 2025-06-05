@@ -3,9 +3,12 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI  # ✅ 新版 SDK
 
-import matplotlib
 import matplotlib.pyplot as plt
-matplotlib.rcParams['font.family'] = 'Microsoft JhengHei'  # 微軟正黑體支援繁體中文
+import matplotlib
+
+# 設定中文字體，避免亂碼（多個候選字體供選擇）
+matplotlib.rcParams['font.sans-serif'] = ['Taipei Sans TC Beta', 'SimHei', 'Arial Unicode MS', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False  # 顯示負號
 
 
 # 載入 .env 的金鑰
