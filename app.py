@@ -15,15 +15,18 @@ st.subheader("幫你模擬投資報酬與複利回報")
 st.markdown("請輸入以下投資參數：")
 
 monthly_investment = st.number_input(
-    "每月投資金額（元）", min_value=0, value=10000, step=1000
+    "每月投資金額（元）", min_value=0, value=10000, step=1000,
+    help="輸入預計在每個月固定投入的金額，單位為新台幣。"
 )
 
 annual_return_rate = st.number_input(
-    "年報酬率（％）", min_value=0.0, max_value=100.0, value=5.0, step=0.1
+    "年報酬率（％）", min_value=0.0, max_value=100.0, value=5.0, step=0.1,
+    help="輸入預估的年化報酬率，單位為％（例如 5% 就輸入 5，非 0.05）。若不確定可以先用預設的大盤5%進行試算。"
 )
 
 years = st.number_input(
-    "投資期間（年）", min_value=1, max_value=100, value=20, step=1
+    "投資期間（年）", min_value=1, max_value=100, value=20, step=1,
+    help="輸入計畫持續投入的總年數（例如 20 年）"
 )
 
 # 有輸入就送給 GPT 模擬分析
