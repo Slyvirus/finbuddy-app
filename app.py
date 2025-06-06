@@ -2,12 +2,14 @@ import streamlit as st
 from dotenv import load_dotenv
 import os
 from openai import OpenAI
-
 import matplotlib.pyplot as plt
 import matplotlib
 
-# ✅ 字體設定：避免亂碼
-matplotlib.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans']
+# ✅ 中文顯示設定（fallback 字體組合）
+matplotlib.rcParams['font.sans-serif'] = [
+    'Taipei Sans TC Beta', 'SimHei', 'Noto Sans CJK TC',
+    'Arial Unicode MS', 'DejaVu Sans'
+]
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 # === 載入金鑰 ===
@@ -15,108 +17,111 @@ load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=openai_api_key)
 
-# === 頁面設定 ===
+# === 頁面標題 ===
 st.set_page_config(page_title="FinBuddy", layout="wide")
-st.title("🤖 FinBuddy - Investment ROI Simulator")
-st.subheader("Simulate investment growth with compounding interest")
+st.title("🤖 複利帥弟 FinBuddy")
+st.subheader("幫你模擬投資報酬與複利回報")
 
-# === 模式選擇（預設為定期定額）===
-mode = st.selectbox("Choose investment mode:", ["DCA (Monthly Investment)", "Lump Sum Investment"], index=0)
+# === 模式選單 ===
+mode = st.selectbox("選擇模擬模式：", ["定期定額", "單筆投入"], index=0)
 
-# === 輸入區 ===
-monthly_investment = st.number_input(
-    "Monthly Investment (TWD)", min_value=0, value=10000, step=1000,
-    help="Enter the fixed amount you plan to invest each month."
-)
-annual_return_rate = st.number_input(
-    "Annual Return Rate (%)", min_value=0.0, max_value=100.0, value=5.0, step=0.1,
-    help="Enter the estimated annual return rate (e.g., enter 5 for 5%)."
-)
-years = st.number_input(
-    "Investment Period (Years)", min_value=1, max_value=100, value=20, step=1,
-    help="Enter the total number of years you plan to invest."
-)
+# === 使用者輸入 ===
+monthly_investment = st.number_input("每月投資金額（元）", min_value=0, value=10000, step=1000)
+annual_return_rate = st.number_input("年報酬率（%）", min_value=0.0, max_value=100.0, value=5.0, step=0.1)
+years = st.number_input("投資期間（年）", min_value=1, max_value=100, value=20)
 
-# === 側邊欄功能 ===
-st.sidebar.markdown("# 🛠 Options")
+# === 側邊欄 ===
+st.sidebar.markdown("# 🛠 操作選項")
 if "history" not in st.session_state:
     st.session_state.history = []
 
-if st.sidebar.button("🧹 Clear Inputs"):
+if st.sidebar.button("🧹 清除輸入內容"):
     monthly_investment = 10000
     annual_return_rate = 5.0
     years = 20
     st.experimental_rerun()
 
-st.sidebar.markdown("### 📒 Simulation History")
+st.sidebar.markdown("### 📒 歷史試算紀錄")
 if st.session_state.history:
     for i, record in enumerate(reversed(st.session_state.history), 1):
-        st.sidebar.markdown(f"**#{i}**\n\n{record}")
+        st.sidebar.markdown(f"**第 {i} 筆**\n\n{record}")
 else:
-    st.sidebar.caption("No simulations yet.")
+    st.sidebar.caption("目前尚沒有試算紀錄")
 
-# === A6.2 單筆投入 vs 定期定額 模擬比較區段 ===
+# === 模擬區塊 ===
 if st.button("送出模擬"):
     with st.spinner("FinBuddy 思考中..."):
 
-        # 基本參數設定
+        # === A6.2 單筆 vs 定期定額邏輯 ===
         n = years * 12
         monthly_rate = annual_return_rate / 100 / 12
 
-        # ✅ 定期定額模擬（每月投入 for 迴圈）
-        dca_growth_value = 0
+        # ✅ 定期定額模擬（實際累積）
+        total_dca = 0
         dca_growth = []
         for _ in range(n):
-            dca_growth_value = dca_growth_value * (1 + monthly_rate) + monthly_investment
-            dca_growth.append(dca_growth_value)
+            total_dca = total_dca * (1 + monthly_rate) + monthly_investment
+            dca_growth.append(total_dca)
 
-        # ✅ 單筆投入模擬（同樣本金、年複利）
+        # ✅ 單筆投入模擬（用相同總本金試算）
         total_principal = monthly_investment * 12 * years
         lump_sum = total_principal * (1 + annual_return_rate / 100) ** years
 
         # ✅ 差異比較
         diff = lump_sum - total_dca
 
-        # ✅ 條列顯示比較結果（不使用表格）
+        # ✅ 條列呈現
         st.markdown(f"""
         ### 💡 投資方式比較結果
-
         - **定期定額最終金額**：約 NT${total_dca:,.0f} 元
         - **單筆投入（一次投入相同本金）最終金額**：約 NT${lump_sum:,.0f} 元
         - **總本金投入**：NT${total_principal:,.0f} 元
-        - **單筆投入最終金額，比定期定額多賺**：約 NT${diff:,.0f} 元
-        
-        ✅ 根據你的設定，每月投入 NT${monthly_investment} 元、年報酬率 {annual_return_rate:.1f}%，投資 {years} 年後：
+        - **單筆投入最後金額，比定期定額多賺**：約 NT${diff:,.0f} 元
 
-        1. 總投入本金為：NT${monthly_investment} × 12 × {years} = NT${total_principal:,} 元
-        2. 若採「定期定額」投資方式，預估最終資產累積為：**NT${total_dca:,.0f} 元**
-        3. 若改為「一次性投入」相同本金並持有 {years} 年，預估資產可累積至：**NT${lump_sum:,.0f} 元**
-        4. 兩者相較，單筆投入策略將多出 **NT${diff:,.0f} 元** 的潛在回報
-        
-        📌 計算公式：FV = P × (1 + r)^t，其中 P 為投入本金、r 為年報酬率、t 為年數。
-""")
+        ✅ 根據你的設定，每月投入 NT${monthly_investment} 元，年報酬率 {annual_return_rate:.1f}%、投資 {years} 年後：
 
+        1. 總投入本金為：NT${monthly_investment} × 12 × {years} = NT${total_principal:,.0f} 元
+        2. 若採「定期定額」投資方式，預估資產可累積為：**NT${total_dca:,.0f} 元**
+        3. 若為「一次性投入」相同本金並持有 20 年，預估資產可累積至：**NT${lump_sum:,.0f} 元**
+        4. 若對照，單筆投入總報酬將比定期定額多賺：約 NT${diff:,.0f} 元 🔍 可考慮配置回報
 
-        # === 儲存歷史試算紀錄 ===
+        🧮 計算公式：FV = P × (1 + r)^t，其中 P 為投入本金、r 為年報酬率、t 為年數。
+        """)
+
+        # === 紀錄歷史 ===
         st.session_state.history.append(
             f"每月投資：{monthly_investment} 元，年報酬率：{annual_return_rate}% ，年數：{years} 年 → 已完成試算"
         )
 
-        # === 圖表繪製區（英文標示，保持與邏輯一致）===
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.plot(range(1, n + 1), dca_growth, color="teal", linewidth=2, label="Dollar-Cost Averaging")
-        ax.axhline(y=lump_sum, color="orange", linestyle="--", label="Lump-Sum Investment")
-        ax.annotate(f"DCA Final\nNT$ {int(dca_growth_value):,}", xy=(n, dca_growth[-1]),
-                    xytext=(n - 20, dca_growth[-1] * 1.05),
-                    arrowprops=dict(facecolor='black', shrink=0.05), fontsize=10, color="black")
-        ax.set_title("Investment Value Comparison")
-        ax.set_xlabel("Month")
-        ax.set_ylabel("Accumulated Value (TWD)")
-        ax.grid(True)
-        ax.legend()
-        st.pyplot(fig)
+      # === 圖表區（修正為英文字體） ===
+fig, ax = plt.subplots(figsize=(8, 5))
 
-        # === GPT 中文說明區 ===
+# 設定英文字體
+ax.set_title("Investment Value Comparison", fontname="DejaVu Sans")
+ax.set_xlabel("Month", fontname="DejaVu Sans")
+ax.set_ylabel("Accumulated Value (TWD)", fontname="DejaVu Sans")
+
+# 畫出兩種投資曲線
+ax.plot(range(1, n + 1), dca_growth, color="teal", linewidth=2, label="Dollar-Cost Averaging")
+ax.axhline(y=lump_sum, color="orange", linestyle="--", label="Lump-Sum Investment")
+
+# 加上定期定額終點註解
+ax.annotate(
+    f"DCA Final\n{int(total_dca):,} TWD",
+    xy=(n, dca_growth[-1]),
+    xytext=(n - 20, dca_growth[-1] * 1.05),
+    arrowprops=dict(facecolor='black', shrink=0.05),
+    fontsize=10,
+    fontname="DejaVu Sans",
+    color="black"
+)
+
+ax.grid(True)
+ax.legend(prop={"family": "DejaVu Sans"})
+st.pyplot(fig)
+
+
+        # === GPT 中文解說 ===
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -138,3 +143,4 @@ if st.button("送出模擬"):
             ],
         )
         st.success(response.choices[0].message.content)
+
