@@ -75,17 +75,27 @@ if st.button("送出模擬"):
         lump_sum = total_principal * (1 + annual_return_rate / 100) ** years
 
         # ✅ 差異比較
-        diff = lump_sum - dca_growth_value
+        diff = lump_sum - total_dca
 
         # ✅ 條列顯示比較結果（不使用表格）
         st.markdown(f"""
         ### 💡 投資方式比較結果
 
-        - 定期定額最終金額：約 NT$ {dca_growth_value:,.0f} 元  
-        - 單筆投入（一次投入相同本金）最終金額：約 NT$ {lump_sum:,.0f} 元  
-        - 總本金投入：NT$ {total_principal:,.0f} 元  
-        - 單筆投入比定期定額多賺：約 NT$ {diff:,.0f} 元  
-        """)
+        - **定期定額最終金額**：約 NT${total_dca:,.0f} 元
+        - **單筆投入（一次投入相同本金）最終金額**：約 NT${lump_sum:,.0f} 元
+        - **總本金投入**：NT${total_principal:,.0f} 元
+        - **單筆投入最終金額，比定期定額多賺**：約 NT${diff:,.0f} 元
+        
+        ✅ 根據你的設定，每月投入 NT${monthly_investment} 元、年報酬率 {annual_return_rate:.1f}%，投資 {years} 年後：
+
+        1. 總投入本金為：NT${monthly_investment} × 12 × {years} = NT${total_principal:,} 元
+        2. 若採「定期定額」投資方式，預估最終資產累積為：**NT${total_dca:,.0f} 元**
+        3. 若改為「一次性投入」相同本金並持有 {years} 年，預估資產可累積至：**NT${lump_sum:,.0f} 元**
+        4. 兩者相較，單筆投入策略將多出 **NT${diff:,.0f} 元** 的潛在回報
+        
+        📌 計算公式：FV = P × (1 + r)^t，其中 P 為投入本金、r 為年報酬率、t 為年數。
+""")
+
 
         # === 儲存歷史試算紀錄 ===
         st.session_state.history.append(
