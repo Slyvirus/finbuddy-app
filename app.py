@@ -55,52 +55,58 @@ if st.session_state.history:
 else:
     st.sidebar.caption("No simulations yet.")
 
-# === 模擬區 ===
-if st.button("Run Simulation"):
-    with st.spinner("FinBuddy is thinking..."):
+# === A6.2 單筆投入 vs 定期定額 模擬比較區段 ===
+if st.button("送出模擬"):
+    with st.spinner("FinBuddy 思考中..."):
 
+        # 基本參數設定
         n = years * 12
-        r = annual_return_rate / 100 / 12
+        monthly_rate = annual_return_rate / 100 / 12
 
-        # DCA 模擬
-        total_dca = 0
+        # ✅ 定期定額模擬（每月投入 for 迴圈）
+        dca_growth_value = 0
         dca_growth = []
         for _ in range(n):
-            total_dca = total_dca * (1 + r) + monthly_investment
-            dca_growth.append(total_dca)
+            dca_growth_value = dca_growth_value * (1 + monthly_rate) + monthly_investment
+            dca_growth.append(dca_growth_value)
 
-        # Lump Sum 模擬
-        lump_sum = monthly_investment * n * (1 + r) ** n
-        diff = total_dca - lump_sum
+        # ✅ 單筆投入模擬（同樣本金、年複利）
+        total_principal = monthly_investment * 12 * years
+        lump_sum = total_principal * (1 + annual_return_rate / 100) ** years
 
-        # 結果摘要
+        # ✅ 差異比較
+        diff = lump_sum - dca_growth_value
+
+        # ✅ 條列顯示比較結果（不使用表格）
         st.markdown(f"""
-        ### 💰 **Result Summary**
-        - **DCA Final Amount**: ${total_dca:,.0f}
-        - **Lump Sum Final Amount**: ${lump_sum:,.0f}
-        - 📌 **DCA earns more by**: ${diff:,.0f}
+        ### 💡 投資方式比較結果
+
+        - 定期定額最終金額：約 NT$ {dca_growth_value:,.0f} 元  
+        - 單筆投入（一次投入相同本金）最終金額：約 NT$ {lump_sum:,.0f} 元  
+        - 總本金投入：NT$ {total_principal:,.0f} 元  
+        - 單筆投入比定期定額多賺：約 NT$ {diff:,.0f} 元  
         """)
 
-        # 紀錄
+        # === 儲存歷史試算紀錄 ===
         st.session_state.history.append(
-            f"Monthly: {monthly_investment}, Rate: {annual_return_rate}%, Years: {years} → Done"
+            f"每月投資：{monthly_investment} 元，年報酬率：{annual_return_rate}% ，年數：{years} 年 → 已完成試算"
         )
 
-        # 圖表
+        # === 圖表繪製區（英文標示，保持與邏輯一致）===
         fig, ax = plt.subplots(figsize=(8, 5))
-        ax.plot(range(1, n + 1), dca_growth, color="teal", linewidth=2, label="DCA")
-        ax.axhline(y=lump_sum, color="orange", linestyle="--", label="Lump Sum")
-        ax.annotate(f"DCA\n${int(total_dca):,}", xy=(n, dca_growth[-1]),
+        ax.plot(range(1, n + 1), dca_growth, color="teal", linewidth=2, label="Dollar-Cost Averaging")
+        ax.axhline(y=lump_sum, color="orange", linestyle="--", label="Lump-Sum Investment")
+        ax.annotate(f"DCA Final\nNT$ {int(dca_growth_value):,}", xy=(n, dca_growth[-1]),
                     xytext=(n - 20, dca_growth[-1] * 1.05),
                     arrowprops=dict(facecolor='black', shrink=0.05), fontsize=10, color="black")
-        ax.set_title("Investment Value Over Time")
+        ax.set_title("Investment Value Comparison")
         ax.set_xlabel("Month")
-        ax.set_ylabel("Total Value (TWD)")
+        ax.set_ylabel("Accumulated Value (TWD)")
         ax.grid(True)
         ax.legend()
         st.pyplot(fig)
 
-        # GPT 中文回應
+        # === GPT 中文說明區 ===
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
