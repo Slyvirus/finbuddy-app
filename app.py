@@ -1,5 +1,3 @@
-# app.py
-
 import streamlit as st
 from dotenv import load_dotenv
 import os
@@ -22,7 +20,9 @@ st.title("🤖 複利帥弟 FinBuddy")
 st.subheader("幫你模擬投資報酬與複利回報")
 
 # === 模式選單（中文）===
-mode = st.selectbox("選擇模擬模式：", ["定期定額", "單筆投入"], index=0)
+mode_label_to_value = {"定期定額": "DCA", "單筆投入": "LumpSum"}
+mode_display = st.selectbox("選擇模擬模式：", list(mode_label_to_value.keys()), index=0)
+mode = mode_label_to_value[mode_display]
 
 # === 輸入欄位 ===
 monthly_investment = st.number_input("每月投資金額（元）", min_value=0, value=10000, step=1000)
@@ -43,7 +43,9 @@ if st.sidebar.button("🧹 清除輸入內容"):
 st.sidebar.markdown("### 📒 歷史試算紀錄")
 if st.session_state.history:
     for i, record in enumerate(reversed(st.session_state.history), 1):
-        st.sidebar.markdown(f"**第 {i} 筆**\n\n{record}")
+        st.sidebar.markdown(f"**第 {i} 筆**
+
+{record}")
 else:
     st.sidebar.caption("目前尚沒有試算紀錄")
 
@@ -64,35 +66,36 @@ if st.button("送出模擬"):
         # 單筆投入
         total_principal = monthly_investment * 12 * years
         lump_sum = total_principal * (1 + annual_return_rate / 100) ** years
-
         diff = lump_sum - total_dca
 
         # 顯示摘要比較結果
         st.markdown(f"""
         ### 💡 投資方式比較結果
-        - **定期定額最終總金額**：約 NT${total_dca:,.0f} 元
-        - **單筆投入（一次投入相同本金）最終金額**：約 NT${lump_sum:,.0f} 元
-        - **總投入本金**：NT${total_principal:,.0f} 元
-        - **單筆投入最終金額比定期定額多賺**：約 NT${diff:,.0f} 元
+        - **定期定額最終總金額**：**NT${total_dca:,.0f} 元**
+        - **單筆投入（一次投入相同本金）最終金額**：**NT${lump_sum:,.0f} 元**
+        - **總投入本金**：**NT${total_principal:,.0f} 元**
+        - **單筆投入最終金額比定期定額多賺**：**NT${diff:,.0f} 元**
         """)
 
+        # 說明與驗算段落
         st.markdown(f"""
-        📌 根據你的設定，每月投入 NT${monthly_investment:,} 元、年報酬率 {annual_return_rate:.1f}%、投資 {years} 年後：
+        📌 根據你的設定，每月投入 **NT${monthly_investment:,}** 元、年報酬率 **{annual_return_rate:.1f}%**、投資 **{years} 年** 後：
 
-        1. 總投入本金為：NT${monthly_investment} × 12 × {years} = NT${total_principal:,.0f} 元  
-        2. 若採「定期定額」投資方式，預估資產可累積為：約 NT${total_dca:,.0f} 元  
-        3. 若改為「一次性投入」相同本金並持有 {years} 年，預估資產可累積至：約 NT${lump_sum:,.0f} 元  
-        4. 兩者相較，單筆投入獲得的預估報酬，多出約 NT${diff:,.0f} 元於同樣期間  
+        1. **總投入本金為**：**NT${monthly_investment} × 12 × {years} = NT${total_principal:,.0f} 元**
+        2. **若採定期定額投資方式，模擬結果預估可累積為**：**NT${total_dca:,.0f} 元**
+        3. **若改為一次性投入並持有 {years} 年，預估資產累積為**：**NT${lump_sum:,.0f} 元**
+        4. **兩者相較，單筆投入可多獲得約** **NT${diff:,.0f} 元** 於相同期間
 
-        🧠 計算公式：FV = P × (1 + r)^t，其中 P 為投入本金、r 為年報酬率、t 為年數。
-        ⚠️ 本模擬僅為參考用途，實際報酬可能受市場波動與風險影響。
+        🧠 模擬公式：每月投資金額 × [((1 + r)^n - 1) ÷ r]，其中 r 為月報酬率，n 為總期數
+        ⚠️ 本模擬為依參數所做推估，非真實財務建議，請自行評估風險。
         """)
 
-        # === 繪製圖表 ===
+        # === 圖表呈現 ===
         fig, ax = plt.subplots(figsize=(8, 5))
         ax.plot(range(1, n + 1), dca_growth, color="teal", linewidth=2, label="Dollar-Cost Averaging")
         ax.axhline(y=lump_sum, color="orange", linestyle="--", label="Lump-Sum Investment")
-        ax.annotate(f"DCA Final\nNT${int(total_dca):,}", xy=(n, dca_growth[-1]),
+        ax.annotate(f"DCA Final
+NT${int(total_dca):,}", xy=(n, dca_growth[-1]),
                     xytext=(n - 20, dca_growth[-1] * 1.05),
                     arrowprops=dict(facecolor='black', shrink=0.05),
                     fontsize=10, color="black")
@@ -103,7 +106,7 @@ if st.button("送出模擬"):
         ax.legend()
         st.pyplot(fig)
 
-        # === 補充 GPT 中文說明（保留 AI 溫度）===
+        # === GPT 中文說明 ===
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -126,6 +129,7 @@ if st.button("送出模擬"):
         )
         st.success(response.choices[0].message.content)
 
+        # 紀錄歷史
         st.session_state.history.append(
             f"每月投資：{monthly_investment} 元，年報酬率：{annual_return_rate}% ，年數：{years} 年 → 已完成試算"
         )
